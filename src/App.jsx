@@ -1106,10 +1106,29 @@ function ChatClient({
 // Main Root Application
 export default function App() {
   const [theme, setTheme] = useState('dark'); // 'dark' | 'classic' | 'blueprint' | 'playful'
+  const [isConnected, setIsConnected] = useState(chatSync.isConnected());
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
+
+  useEffect(() => {
+    const handleConnect = () => setIsConnected(true);
+    const handleDisconnect = () => setIsConnected(false);
+
+    chatSync.on('connect', handleConnect);
+    chatSync.on('disconnect', handleDisconnect);
+    chatSync.on('connect_error', handleDisconnect);
+
+    // Set initial connection status
+    setIsConnected(chatSync.isConnected());
+
+    return () => {
+      chatSync.off('connect', handleConnect);
+      chatSync.off('disconnect', handleDisconnect);
+      chatSync.off('connect_error', handleDisconnect);
+    };
+  }, []);
 
   return (
     <div className="app-container">
@@ -1132,6 +1151,33 @@ export default function App() {
         </div>
 
         <div className="navbar-actions">
+          {/* Connection status indicator */}
+          <div className="connection-status" style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            fontSize: '0.75rem',
+            color: isConnected ? 'hsl(145, 75%, 48%)' : 'hsl(355, 78%, 56%)',
+            backgroundColor: isConnected ? 'rgba(145, 75%, 48%, 0.08)' : 'rgba(355, 78%, 56%, 0.08)',
+            border: `1px solid ${isConnected ? 'rgba(145, 75%, 48%, 0.2)' : 'rgba(355, 78%, 56%, 0.2)'}`,
+            borderRadius: '20px',
+            padding: '4px 10px',
+            fontWeight: 600,
+            textShadow: isConnected ? '0 0 8px rgba(145, 75%, 48%, 0.3)' : 'none'
+          }}>
+            <span 
+              className={isConnected ? '' : 'sync-pulse-dot'}
+              style={{
+                width: '6px',
+                height: '6px',
+                borderRadius: '50%',
+                backgroundColor: isConnected ? 'hsl(145, 75%, 48%)' : 'hsl(355, 78%, 56%)',
+                boxShadow: `0 0 8px ${isConnected ? 'hsl(145, 75%, 48%)' : 'hsl(355, 78%, 56%)'}`
+              }}
+            ></span>
+            <span>{isConnected ? 'Sync Connected' : 'Sync Offline'}</span>
+          </div>
+
           <div className="theme-select-container">
             <span style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--text-secondary)' }}>Theme:</span>
             <select 
@@ -1145,7 +1191,6 @@ export default function App() {
               <option value="playful">Playful Gradient</option>
             </select>
           </div>
-
 
         </div>
       </header>

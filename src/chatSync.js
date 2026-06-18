@@ -1,7 +1,9 @@
 import { io } from 'socket.io-client';
 
 // Connects to the host of the current page automatically (same origin & port)
-const socket = io();
+// Or uses a custom WebSocket URL defined in VITE_WS_URL environment variable
+const socketUrl = import.meta.env.VITE_WS_URL || undefined;
+const socket = io(socketUrl);
 const localListeners = new Set();
 
 socket.on('chat-event', (event) => {
@@ -24,6 +26,36 @@ socket.on('connect_error', (error) => {
 });
 
 export const chatSync = {
+  /**
+   * Check if Socket.io is connected.
+   * @returns {boolean}
+   */
+  isConnected() {
+    return socket && socket.connected;
+  },
+
+  /**
+   * Subscribe to Socket.io events.
+   * @param {string} event 
+   * @param {Function} callback 
+   */
+  on(event, callback) {
+    if (socket) {
+      socket.on(event, callback);
+    }
+  },
+
+  /**
+   * Unsubscribe from Socket.io events.
+   * @param {string} event 
+   * @param {Function} callback 
+   */
+  off(event, callback) {
+    if (socket) {
+      socket.off(event, callback);
+    }
+  },
+
   /**
    * Subscribe to chat network sync events.
    * @param {Function} listener - Callback function for received events.
