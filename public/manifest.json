@@ -1,0 +1,25 @@
+{
+  "short_name": "WHO Chat",
+  "name": "WHO - Anonymous Spectra Chat",
+  "description": "Secure, real-time anonymous group chat application with HSL color-coded user avatars.",
+  "id": "/",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#121212",
+  "theme_color": "#121212",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "maskable"
+    }
+  ]
+}
