@@ -18,6 +18,201 @@ import {
 } from 'lucide-react';
 import { chatSync } from './chatSync';
 
+// Interactive Particle System Hook/Component (Standard §2 /animation's)
+function CosmicDustCanvas() {
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let animationFrameId;
+    let particles = [];
+    let mouse = { x: null, y: null, lastX: null, lastY: null };
+
+    const resizeCanvas = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    const handleMouseMove = (e) => {
+      // Respect prefers-reduced-motion
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+
+      if (mouse.lastX === null || mouse.lastY === null) {
+        mouse.lastX = mouse.x;
+        mouse.lastY = mouse.y;
+        return;
+      }
+
+      const speed = Math.hypot(mouse.x - mouse.lastX, mouse.y - mouse.lastY);
+      const count = Math.min(Math.floor(speed / 2.5) + 1, 5);
+
+      for (let i = 0; i < count; i++) {
+        const hslColors = [
+          'hsla(180, 82%, 48%, alpha)',
+          'hsla(270, 80%, 63%, alpha)',
+          'hsla(35,  85%, 53%, alpha)',
+          'hsla(340, 80%, 58%, alpha)',
+          'hsla(145, 75%, 48%, alpha)',
+          'hsla(210, 82%, 55%, alpha)'
+        ];
+        const colorTemplate = hslColors[Math.floor(Math.random() * hslColors.length)];
+
+        particles.push({
+          x: mouse.x + (Math.random() - 0.5) * 20,
+          y: mouse.y + (Math.random() - 0.5) * 20,
+          vx: (Math.random() - 0.5) * 2,
+          vy: (Math.random() - 0.5) * 2 - 0.6,
+          size: Math.random() * 2.5 + 0.8,
+          colorTemplate,
+          alpha: 1,
+          decay: Math.random() * 0.015 + 0.007
+        });
+      }
+
+      mouse.lastX = mouse.x;
+      mouse.lastY = mouse.y;
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+
+    const render = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      particles.forEach((p, idx) => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.alpha -= p.decay;
+
+        if (p.alpha <= 0) {
+          particles.splice(idx, 1);
+          return;
+        }
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fillStyle = p.colorTemplate.replace('alpha', p.alpha);
+        ctx.shadowBlur = p.size * 2.5;
+        ctx.shadowColor = p.colorTemplate.replace('alpha', p.alpha);
+        ctx.fill();
+      });
+      ctx.shadowBlur = 0;
+
+      animationFrameId = requestAnimationFrame(render);
+    };
+    render();
+
+    return () => {
+      window.removeEventListener('resize', resizeCanvas);
+      window.removeEventListener('mousemove', handleMouseMove);
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, []);
+
+  return (
+    <canvas 
+      ref={canvasRef} 
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 0,
+        pointerEvents: 'none',
+        opacity: 0.85
+      }} 
+    />
+  );
+}
+
+// React Confetti Emoji Explosion Component
+function EmojiExplosion({ x, y, emoji }) {
+  const [particles] = useState(() => {
+    return Array.from({ length: 10 }).map((_, i) => {
+      const angle = (i / 10) * Math.PI * 2 + (Math.random() - 0.5) * 0.4;
+      const velocity = Math.random() * 70 + 40;
+      const tx = Math.cos(angle) * velocity;
+      const ty = Math.sin(angle) * velocity - 25;
+      const delay = Math.random() * 60;
+      const scale = Math.random() * 0.4 + 0.8;
+      return { id: i, tx, ty, delay, scale };
+    });
+  });
+
+  return (
+    <div style={{ position: 'fixed', left: x, top: y, pointerEvents: 'none', zIndex: 9999 }}>
+      {particles.map(p => (
+        <span
+          key={p.id}
+          className="exploding-emoji"
+          style={{
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            transform: 'translate3d(-50%, -50%, 0)',
+            fontSize: '1.25rem',
+            animationDelay: `${p.delay}ms`,
+            '--tx': `${p.tx}px`,
+            '--ty': `${p.ty}px`,
+            '--scale': p.scale
+          }}
+        >
+          {emoji}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+// Magnetic Button Proximity Hook
+function useMagnetic(pull = 0.25) {
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    const handleMouseMove = (e) => {
+      const rect = el.getBoundingClientRect();
+      const elX = rect.left + rect.width / 2;
+      const elY = rect.top + rect.height / 2;
+
+      const dx = e.clientX - elX;
+      const dy = e.clientY - elY;
+      const distance = Math.hypot(dx, dy);
+
+      if (distance < 90) {
+        el.style.transform = `translate3d(${dx * pull}px, ${dy * pull}px, 0)`;
+        el.style.transition = 'transform 80ms cubic-bezier(0.25, 1, 0.5, 1)';
+      } else {
+        el.style.transform = '';
+        el.style.transition = 'transform 300ms cubic-bezier(0.16, 1, 0.3, 1)';
+      }
+    };
+
+    const handleMouseLeave = () => {
+      el.style.transform = '';
+      el.style.transition = 'transform 300ms cubic-bezier(0.16, 1, 0.3, 1)';
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    el.addEventListener('mouseleave', handleMouseLeave);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      el.removeEventListener('mouseleave', handleMouseLeave);
+    };
+  }, [pull]);
+
+  return ref;
+}
+
 // Desaturated per 2026 UI standards — 80-85% saturation for eye comfort
 const COLORS = [
   { value: 'hsl(180, 82%, 48%)', name: 'Cyan Spectra',   clrVar: '--clr-cyan' },
@@ -53,6 +248,25 @@ function ChatClient({
   const [copiedRoomId, setCopiedRoomId] = useState(false);
   const [typingUsers, setTypingUsers] = useState({}); // { colorCode: timestamp }
   const [showEmojiPickerForMsg, setShowEmojiPickerForMsg] = useState(null); // messageId
+  const [explosions, setExplosions] = useState([]); // [{ id, x, y, emoji }]
+
+  const magneticSubmitRef = useMagnetic(0.22);
+  const magneticCreateRef = useMagnetic(0.20);
+  const magneticSendRef = useMagnetic(0.28);
+
+  const triggerExplosion = (messageId, emoji) => {
+    const el = document.getElementById(`msg-bubble-${messageId}`);
+    if (el) {
+      const rect = el.getBoundingClientRect();
+      const x = rect.left + rect.width / 2;
+      const y = rect.top + rect.height / 2;
+      const id = Date.now() + Math.random();
+      setExplosions(prev => [...prev, { id, x, y, emoji }]);
+      setTimeout(() => {
+        setExplosions(prev => prev.filter(exp => exp.id !== id));
+      }, 1200);
+    }
+  };
 
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
@@ -224,6 +438,7 @@ function ChatClient({
 
         case 'REACTION':
           if (activeRoom && payload.roomId === activeRoom.id) {
+            triggerExplosion(payload.messageId, payload.emoji);
             setMessages(prev => prev.map(msg => {
               if (msg.id === payload.messageId) {
                 const existingReactions = msg.reactions || [];
@@ -478,6 +693,8 @@ function ChatClient({
   const handleReactToMessage = (messageId, emoji) => {
     if (!activeRoom) return;
 
+    triggerExplosion(messageId, emoji);
+
     chatSync.publish({
       type: 'REACTION',
       payload: {
@@ -542,6 +759,7 @@ function ChatClient({
             </div>
 
             <button 
+              ref={magneticSubmitRef}
               type="submit" 
               className="btn-primary" 
               style={{ width: '100%' }}
@@ -597,7 +815,7 @@ function ChatClient({
                 title="Room Title must be 3-30 characters, alphanumeric, spaces, dashes or underscores."
                 required
               />
-              <button type="submit" className="btn-primary" style={{ '--accent': myColor, '--accent-glow': myColor.replace(')', ', 0.15)').replace('hsl', 'hsla') }}>
+              <button ref={magneticCreateRef} type="submit" className="btn-primary" style={{ '--accent': myColor, '--accent-glow': myColor.replace(')', ', 0.15)').replace('hsl', 'hsla') }}>
                 Create Room
               </button>
             </form>
@@ -638,29 +856,12 @@ function ChatClient({
               <p>Signature Spectra: <span style={{ color: myColor, fontWeight: 700 }}>{getColorName(myColor)}</span></p>
             </div>
             <div>
-              <p style={{ color: 'var(--text-muted)', marginBottom: '4px' }}>
-                Note: In Sandbox split-screen mode, all clients share the same network. Add friends using their ID.
+              <p style={{ color: 'var(--text-muted)', marginBottom: '6px' }}>
+                Note: Share this application link with friends to start chatting. Invite friends to secure rooms by sending them invitations via their unique ID.
               </p>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '6px' }}>
-                {Object.keys(globalSandboxUsers).length > 0 && (
-                  <>
-                    <span style={{ color: 'var(--text-muted)' }}>Online Sandbox IDs:</span>
-                    {Object.entries(globalSandboxUsers).map(([id, color]) => (
-                      id !== myId && (
-                        <span 
-                          key={id} 
-                          className="status-indicator" 
-                          style={{ color, backgroundColor: 'rgba(255,255,255,0.05)', border: `1px solid ${color}`, borderRadius: '10px', padding: '1px 6px', fontSize: '0.75rem', height: 'auto', width: 'auto', display: 'inline-flex', alignItems: 'center', cursor: 'pointer' }}
-                          onClick={() => setFriendIdToInvite(id)}
-                          title="Click to paste ID to invite"
-                        >
-                          {id}
-                        </span>
-                      )
-                    ))}
-                  </>
-                )}
-              </div>
+              <p style={{ color: 'var(--text-muted)' }}>
+                This application is PWA-enabled. You can install it on your home screen for quick offline launch and native window controls.
+              </p>
             </div>
           </div>
         </div>
@@ -786,6 +987,7 @@ function ChatClient({
               >
                 <div 
                   className="message-bubble"
+                  id={`msg-bubble-${msg.id}`}
                   onMouseEnter={() => setShowEmojiPickerForMsg(msg.id)}
                   onMouseLeave={() => setShowEmojiPickerForMsg(null)}
                 >
@@ -888,35 +1090,30 @@ function ChatClient({
               onChange={handleInputChange}
               required
             />
-            <button type="submit" className="btn-primary" style={{ padding: '14px', width: '48px', height: '48px', flexShrink: 0, '--accent': myColor, '--accent-glow': myColor.replace(')', ', 0.15)').replace('hsl', 'hsla') }}>
+            <button ref={magneticSendRef} type="submit" className="btn-primary" style={{ padding: '14px', width: '48px', height: '48px', flexShrink: 0, '--accent': myColor, '--accent-glow': myColor.replace(')', ', 0.15)').replace('hsl', 'hsla') }}>
               <Send size={18} />
             </button>
           </div>
         </form>
       </div>
+      {explosions.map(exp => (
+        <EmojiExplosion key={exp.id} x={exp.x} y={exp.y} emoji={exp.emoji} />
+      ))}
     </div>
   );
 }
 
 // Main Root Application
 export default function App() {
-  const [sandboxMode, setSandboxMode] = useState(false);
-  const [globalSandboxUsers, setGlobalSandboxUsers] = useState({}); // { userId: color }
   const [theme, setTheme] = useState('dark'); // 'dark' | 'classic' | 'blueprint' | 'playful'
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
 
-  const registerSandboxUser = (userId, color) => {
-    setGlobalSandboxUsers(prev => {
-      if (prev[userId] === color) return prev;
-      return { ...prev, [userId]: color };
-    });
-  };
-
   return (
     <div className="app-container">
+      <CosmicDustCanvas />
       {/* Cosmic background glows */}
       <div className="cosmic-bg">
         <div className="cosmic-glow-1"></div>
@@ -949,89 +1146,17 @@ export default function App() {
             </select>
           </div>
 
-          <button 
-            onClick={() => setSandboxMode(!sandboxMode)} 
-            className={`sandbox-mode-btn ${sandboxMode ? 'active' : ''}`}
-            title="Toggle Split-Screen Dev Sandbox"
-          >
-            <Users size={16} /> 
-            {sandboxMode ? 'Exit Dev Sandbox' : 'Open Dev Sandbox (Split-Screen)'}
-          </button>
+
         </div>
       </header>
 
       {/* Main Workspace Area */}
       <main className="main-workspace">
-        {sandboxMode ? (
-          <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', flex: 1, gap: '12px' }}>
-            <div className="glass-panel" style={{ padding: '16px 20px', borderLeft: '3px solid var(--accent)' }}>
-              <h3 style={{ fontSize: '1rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Sparkles size={16} style={{ color: 'var(--accent)' }} /> Developer Split-Screen Sandbox
-              </h3>
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                Simulating three separate devices in real-time. Setup each client with a unique ID (e.g. <code>alice</code>, <code>bob</code>, <code>charlie</code>). Create a room in one client, copy its ID, and invite other clients by typing their ID, or let them join by pasting the Room ID!
-              </p>
-            </div>
-
-            <div className="sandbox-container">
-              {/* Client A */}
-              <div className="sandbox-panel stagger-1">
-                <div className="sandbox-panel-header">
-                  <span className="sandbox-badge"><Shield size={12} /> Client A (Simulated)</span>
-                </div>
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '12px', background: 'rgba(0,0,0,0.15)', overflowY: 'auto' }}>
-                  <ChatClient 
-                    initialId="alice" 
-                    defaultColorIndex={0} 
-                    isSandbox={true}
-                    globalSandboxUsers={globalSandboxUsers}
-                    registerSandboxUser={registerSandboxUser}
-                  />
-                </div>
-              </div>
-
-              {/* Client B */}
-              <div className="sandbox-panel stagger-2">
-                <div className="sandbox-panel-header">
-                  <span className="sandbox-badge"><Shield size={12} /> Client B (Simulated)</span>
-                </div>
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '12px', background: 'rgba(0,0,0,0.15)', overflowY: 'auto' }}>
-                  <ChatClient 
-                    initialId="bob" 
-                    defaultColorIndex={1} 
-                    isSandbox={true}
-                    globalSandboxUsers={globalSandboxUsers}
-                    registerSandboxUser={registerSandboxUser}
-                  />
-                </div>
-              </div>
-
-              {/* Client C */}
-              <div className="sandbox-panel stagger-3">
-                <div className="sandbox-panel-header">
-                  <span className="sandbox-badge"><Shield size={12} /> Client C (Simulated)</span>
-                </div>
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '12px', background: 'rgba(0,0,0,0.15)', overflowY: 'auto' }}>
-                  <ChatClient 
-                    initialId="charlie" 
-                    defaultColorIndex={3} 
-                    isSandbox={true}
-                    globalSandboxUsers={globalSandboxUsers}
-                    registerSandboxUser={registerSandboxUser}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <ChatClient 
-            initialId="me" 
-            defaultColorIndex={0} 
-            isSandbox={false}
-            globalSandboxUsers={globalSandboxUsers}
-            registerSandboxUser={registerSandboxUser}
-          />
-        )}
+        <ChatClient 
+          initialId="" 
+          defaultColorIndex={0} 
+          isSandbox={false}
+        />
       </main>
 
       {/* Simple Footer */}
