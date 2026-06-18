@@ -1,5 +1,5 @@
 ---
-name: ui-engineering-standards
+name: ui-design
 description: Applies 2026 UI engineering and usability standards to front-end development tasks. Use when writing or reviewing CSS, React components, Tailwind styling, dark mode configuration, interactive layouts, or verifying WCAG 2.2 Level AA accessibility and color contrast.
 ---
 

@@ -18,15 +18,16 @@ import {
 } from 'lucide-react';
 import { chatSync } from './chatSync';
 
+// Desaturated per 2026 UI standards — 80-85% saturation for eye comfort
 const COLORS = [
-  { value: 'hsl(180, 100%, 50%)', name: 'Cyan Spectra', clrVar: '--clr-cyan' },
-  { value: 'hsl(270, 95%, 65%)', name: 'Violet Nebula', clrVar: '--clr-violet' },
-  { value: 'hsl(35, 100%, 55%)', name: 'Amber Glow', clrVar: '--clr-amber' },
-  { value: 'hsl(340, 95%, 60%)', name: 'Rose Aurora', clrVar: '--clr-rose' },
-  { value: 'hsl(145, 90%, 50%)', name: 'Emerald Prism', clrVar: '--clr-emerald' },
-  { value: 'hsl(355, 90%, 58%)', name: 'Crimson Flare', clrVar: '--clr-crimson' },
-  { value: 'hsl(50, 100%, 50%)', name: 'Solar Ray', clrVar: '--clr-gold' },
-  { value: 'hsl(210, 100%, 55%)', name: 'Azure Deep', clrVar: '--clr-azure' }
+  { value: 'hsl(180, 82%, 48%)', name: 'Cyan Spectra',   clrVar: '--clr-cyan' },
+  { value: 'hsl(270, 80%, 63%)', name: 'Violet Nebula',  clrVar: '--clr-violet' },
+  { value: 'hsl(35,  85%, 53%)', name: 'Amber Glow',     clrVar: '--clr-amber' },
+  { value: 'hsl(340, 80%, 58%)', name: 'Rose Aurora',    clrVar: '--clr-rose' },
+  { value: 'hsl(145, 75%, 48%)', name: 'Emerald Prism',  clrVar: '--clr-emerald' },
+  { value: 'hsl(355, 78%, 56%)', name: 'Crimson Flare',  clrVar: '--clr-crimson' },
+  { value: 'hsl(50,  85%, 50%)', name: 'Solar Ray',      clrVar: '--clr-gold' },
+  { value: 'hsl(210, 82%, 55%)', name: 'Azure Deep',     clrVar: '--clr-azure' }
 ];
 
 // Reusable Chat Client Component
@@ -515,7 +516,9 @@ function ChatClient({
                   className="glass-input" 
                   placeholder="e.g. cyber_ghost, rudra_45"
                   value={myId}
-                  onChange={(e) => setMyId(e.target.value.toLowerCase().replace(/\s+/g, ''))}
+                  onChange={(e) => setMyId(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+                  pattern="^[a-z0-9_]{3,16}$"
+                  title="ID must be 3-16 characters, lowercase alphanumeric or underscores only."
                   required
                 />
               </div>
@@ -578,7 +581,7 @@ function ChatClient({
 
         <div className="dashboard-grid">
           {/* Create Room Card */}
-          <div className="glass-panel dashboard-card glass-panel-accent" style={{ '--accent': myColor }}>
+          <div className="glass-panel dashboard-card glass-panel-accent stagger-1" style={{ '--accent': myColor }}>
             <h3 className="card-title"><Plus size={20} style={{ color: myColor }} /> Launch Chatroom</h3>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: 1.5 }}>
               Launch a secure anonymous chatroom. Only people you add by their ID will receive invitations to enter.
@@ -590,6 +593,8 @@ function ChatClient({
                 placeholder="Room Title (e.g. Secret Ops, Weekend Hangout)" 
                 value={roomInput}
                 onChange={(e) => setRoomInput(e.target.value)}
+                pattern="^[a-zA-Z0-9\s_-]{3,30}$"
+                title="Room Title must be 3-30 characters, alphanumeric, spaces, dashes or underscores."
                 required
               />
               <button type="submit" className="btn-primary" style={{ '--accent': myColor, '--accent-glow': myColor.replace(')', ', 0.15)').replace('hsl', 'hsla') }}>
@@ -599,7 +604,7 @@ function ChatClient({
           </div>
 
           {/* Join Room Card */}
-          <div className="glass-panel dashboard-card">
+          <div className="glass-panel dashboard-card stagger-2">
             <h3 className="card-title"><Hash size={20} style={{ color: 'var(--text-muted)' }} /> Join Room</h3>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: 1.5 }}>
               If a friend gave you a Room ID, enter it below to join their active anonymous chat room directly.
@@ -611,6 +616,8 @@ function ChatClient({
                 placeholder="Enter Room ID (e.g. room_3284)" 
                 value={roomInput}
                 onChange={(e) => setRoomInput(e.target.value)}
+                pattern="^room_[0-9]{4}$"
+                title="Room ID must be room_ followed by 4 digits."
                 required
               />
               <button type="submit" className="btn-secondary">
@@ -621,7 +628,7 @@ function ChatClient({
         </div>
 
         {/* Info panel */}
-        <div className="glass-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div className="glass-panel stagger-3" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <h4 style={{ display: 'flex', alignState: 'center', gap: '8px', fontSize: '1rem', fontWeight: 600 }}>
             <Sparkles size={18} style={{ color: myColor }} /> Incognito Lobby Details
           </h4>
@@ -665,7 +672,7 @@ function ChatClient({
   return (
     <div className="chat-workspace animate-fade-in">
       {/* Sidebar: Room Info & Add friends */}
-      <div className="glass-panel chat-sidebar">
+      <div className="glass-panel chat-sidebar stagger-1">
         {/* Section 1: Room Identity */}
         <div className="sidebar-section">
           <span className="section-label">Anonymous Room</span>
@@ -742,7 +749,7 @@ function ChatClient({
       </div>
 
       {/* Main Chat Panel */}
-      <div className="glass-panel chat-main">
+      <div className="glass-panel chat-main stagger-2">
         {/* Chat header */}
         <div className="chat-header">
           <div className="chat-room-title">
@@ -796,8 +803,8 @@ function ChatClient({
                       position: 'absolute',
                       bottom: '-28px',
                       [isMyMessage ? 'right' : 'left']: '4px',
-                      background: 'rgba(7, 9, 14, 0.95)',
-                      border: '1px solid var(--border-glass-glow)',
+                      background: 'var(--color-panel-active)',
+                      border: '1px solid var(--color-panel-border)',
                       borderRadius: '20px',
                       padding: '2px 8px',
                       zIndex: 20
@@ -914,6 +921,7 @@ export default function App() {
       <div className="cosmic-bg">
         <div className="cosmic-glow-1"></div>
         <div className="cosmic-glow-2"></div>
+        <div className="cosmic-glow-3"></div>
       </div>
 
       {/* Top Navbar */}
@@ -956,9 +964,9 @@ export default function App() {
       <main className="main-workspace">
         {sandboxMode ? (
           <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', flex: 1, gap: '12px' }}>
-            <div className="glass-panel" style={{ padding: '16px 20px', borderLeft: '4px solid var(--clr-violet)' }}>
+            <div className="glass-panel" style={{ padding: '16px 20px', borderLeft: '3px solid var(--accent)' }}>
               <h3 style={{ fontSize: '1rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Sparkles size={16} style={{ color: 'var(--clr-violet)' }} /> Developer Split-Screen Sandbox
+                <Sparkles size={16} style={{ color: 'var(--accent)' }} /> Developer Split-Screen Sandbox
               </h3>
               <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
                 Simulating three separate devices in real-time. Setup each client with a unique ID (e.g. <code>alice</code>, <code>bob</code>, <code>charlie</code>). Create a room in one client, copy its ID, and invite other clients by typing their ID, or let them join by pasting the Room ID!
@@ -967,7 +975,7 @@ export default function App() {
 
             <div className="sandbox-container">
               {/* Client A */}
-              <div className="sandbox-panel">
+              <div className="sandbox-panel stagger-1">
                 <div className="sandbox-panel-header">
                   <span className="sandbox-badge"><Shield size={12} /> Client A (Simulated)</span>
                 </div>
@@ -983,7 +991,7 @@ export default function App() {
               </div>
 
               {/* Client B */}
-              <div className="sandbox-panel">
+              <div className="sandbox-panel stagger-2">
                 <div className="sandbox-panel-header">
                   <span className="sandbox-badge"><Shield size={12} /> Client B (Simulated)</span>
                 </div>
@@ -999,7 +1007,7 @@ export default function App() {
               </div>
 
               {/* Client C */}
-              <div className="sandbox-panel">
+              <div className="sandbox-panel stagger-3">
                 <div className="sandbox-panel-header">
                   <span className="sandbox-badge"><Shield size={12} /> Client C (Simulated)</span>
                 </div>
